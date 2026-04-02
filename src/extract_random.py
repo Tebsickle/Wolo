@@ -3,14 +3,13 @@ import os
 from pathlib import Path
 from libzim.reader import Archive
 
-# Use a RAW string for the Windows Network Path
-ZIM_PATH = r"W:\wiki_en_all_maxi_2026-02.zim"
-OUTPUT_DIR = "./wiki_output"
+ZIM_PATH = "data/wiki_en_all_maxi_2026-02.zim"
+OUTPUT_DIR = "./test_output"
 
 if not os.path.exists(OUTPUT_DIR):
     os.makedirs(OUTPUT_DIR)
 
-print("Connecting to 4TB HDD over Samba...")
+print("Connecting archive...")
 zim_path = Path(ZIM_PATH)
 archive = None
 
@@ -42,7 +41,6 @@ try:
 
 except RuntimeError as error:
     print(f"\n--- READ ERROR ---")
-    print(f"The router couldn't fetch the data fast enough.")
     print(f"Error: {error}")
 except Exception as e:
     print(f"Unexpected Error: {e}")
