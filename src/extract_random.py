@@ -16,10 +16,9 @@ archive = None
 try:
     # 1. Open the archive
     archive = Archive(zim_path)
-    print("Archive Opened. Locating Main Entry...")
+    print("Archive Opened. Locating Entry...")
     
-    # 2. Grab the main entry (Wikipedia Home)
-    entry = archive.main_entry
+    entry = archive._get_entry_by_id(10)
     item = entry.get_item()
     
     # 3. Read the data into a byte buffer
