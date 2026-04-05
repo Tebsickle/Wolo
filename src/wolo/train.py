@@ -19,7 +19,7 @@ class TrainingConfig:
     max_entry_id: int | None = None
     sequence_length: int = 96
     batch_size: int = 1
-    steps: int = 500
+    steps: int | None = None
     learning_rate: float = 3e-4
     embedding_dim: int = 64
     hidden_size: int = 128
@@ -87,7 +87,12 @@ def run_training(config: TrainingConfig, resume_from: Path | None = None) -> Non
     started_at = time.perf_counter()
 
     try:
-        for step in range(start_step, config.steps + 1):
+        step = start_step - 1
+        while True:
+            step += 1
+            if config.steps is not None and step > config.steps:
+                break
+
             batch_inputs, batch_targets = sampler.sample_batch(config.batch_size, config.sequence_length)
             batch_inputs = batch_inputs.to(device)
             batch_targets = batch_targets.to(device)
@@ -111,7 +116,7 @@ def run_training(config: TrainingConfig, resume_from: Path | None = None) -> Non
                 print(json.dumps(metrics))
                 _save_metrics(config.metrics_path, metrics)
 
-            if step % config.checkpoint_every == 0 or step == config.steps:
+            if step % config.checkpoint_every == 0 or (config.steps is not None and step == config.steps):
                 checkpoint_path = _save_checkpoint(config.checkpoint_dir, step, config, model, optimizer)
                 print(json.dumps({"checkpoint": str(checkpoint_path)}))
     finally:

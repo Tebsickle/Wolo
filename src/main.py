@@ -16,7 +16,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-entry-id", type=int, default=None)
     parser.add_argument("--sequence-length", type=int, default=defaults.sequence_length)
     parser.add_argument("--batch-size", type=int, default=defaults.batch_size)
-    parser.add_argument("--steps", type=int, default=defaults.steps)
+    parser.add_argument("--steps", type=int, default=defaults.steps, help="Optional training cap; omit to run until stopped")
     parser.add_argument("--learning-rate", type=float, default=defaults.learning_rate)
     parser.add_argument("--embedding-dim", type=int, default=defaults.embedding_dim)
     parser.add_argument("--hidden-size", type=int, default=defaults.hidden_size)
