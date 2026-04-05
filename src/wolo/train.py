@@ -27,7 +27,7 @@ class TrainingConfig:
     checkpoint_dir: Path = Path("checkpoints")
     metrics_path: Path = Path("runs/metrics.jsonl")
     log_every: int = 50
-    checkpoint_every: int = 250
+    checkpoint_every: int = 750
     seed: int = 0
 
 

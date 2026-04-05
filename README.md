@@ -55,3 +55,23 @@ All arguments are optional:
 ```
 
 By default, training auto-resumes from the latest checkpoint when parameters match the current architecture.
+
+## Interact With A Trained Model
+
+After training, you can open an interactive prompt against your latest checkpoint:
+
+```bash
+~/.venvs/wolo/bin/python src/chat.py
+```
+
+Optional flags:
+
+```bash
+# Use a specific checkpoint
+~/.venvs/wolo/bin/python src/chat.py --checkpoint checkpoints/step_000500.pt
+
+# Tune generation behavior
+~/.venvs/wolo/bin/python src/chat.py --max-new-tokens 300 --temperature 0.8 --top-k 50
+```
+
+Type `/exit` to quit.
