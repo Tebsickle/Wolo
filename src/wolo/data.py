@@ -13,9 +13,18 @@ class _HTMLTextExtractor(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
         self._parts: list[str] = []
+        self._ignored_tag_depth = 0
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        if tag.lower() in {"script", "style", "noscript"}:
+            self._ignored_tag_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() in {"script", "style", "noscript"} and self._ignored_tag_depth > 0:
+            self._ignored_tag_depth -= 1
 
     def handle_data(self, data: str) -> None:
-        if data:
+        if data and self._ignored_tag_depth == 0:
             self._parts.append(data)
 
     def extract(self) -> str:
@@ -39,6 +48,44 @@ def _normalize_text(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def _is_likely_article_entry(entry, item) -> bool:
+    namespace = getattr(entry, "namespace", None)
+    if namespace is not None and str(namespace) != "A":
+        return False
+
+    path = getattr(entry, "path", None) or getattr(entry, "url", None)
+    if isinstance(path, str) and "/" in path:
+        prefix = path.split("/", 1)[0]
+        if len(prefix) == 1 and prefix.isalpha() and prefix != "A":
+            return False
+
+    mimetype = getattr(item, "mimetype", None)
+    if mimetype is None:
+        mimetype = getattr(item, "mime_type", None)
+    if callable(mimetype):
+        mimetype = mimetype()
+
+    if isinstance(mimetype, str):
+        lowered = mimetype.lower()
+        if "html" not in lowered and "text/plain" not in lowered:
+            return False
+
+    return True
+
+
+def _looks_like_boilerplate(text: str) -> bool:
+    lowered = text.lower()
+    noisy_markers = (
+        "mw-parser-output",
+        "vector-sticky-header",
+        "ext.cite",
+        "navbox",
+        "wikitable",
+    )
+    hit_count = sum(marker in lowered for marker in noisy_markers)
+    return hit_count >= 2
+
+
 @dataclass
 class ZimByteSampler:
     zim_path: Path
@@ -46,6 +93,7 @@ class ZimByteSampler:
     max_entry_id: int | None = None
     seed: int = 0
     max_attempts: int = 128
+    min_text_chars: int = 256
 
     def __post_init__(self) -> None:
         self._archive = Archive(self.zim_path)
@@ -92,6 +140,9 @@ class ZimByteSampler:
 
     def _entry_to_text(self, entry) -> str:
         item = entry.get_item()
+        if not _is_likely_article_entry(entry, item):
+            return ""
+
         content = item.content
         if isinstance(content, (bytes, bytearray, memoryview)):
             text = bytes(content).decode("utf-8", errors="ignore")
@@ -99,7 +150,13 @@ class ZimByteSampler:
             text = content.tobytes().decode("utf-8", errors="ignore")
         else:
             text = str(content)
-        return _normalize_text(_strip_html(text))
+
+        normalized = _normalize_text(_strip_html(text))
+        if len(normalized) < self.min_text_chars:
+            return ""
+        if _looks_like_boilerplate(normalized):
+            return ""
+        return normalized
 
     def sample_sequence(self, sequence_length: int) -> tuple[torch.Tensor, torch.Tensor]:
         """Sample a single sequence by reading sequentially through the archive."""
