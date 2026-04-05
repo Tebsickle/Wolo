@@ -2,6 +2,7 @@
 import os
 from pathlib import Path
 from libzim.reader import Archive
+from random import randint
 
 ZIM_PATH = "data/wiki_en_all_maxi_2026-02.zim"
 OUTPUT_DIR = "./test_output"
@@ -18,7 +19,9 @@ try:
     archive = Archive(zim_path)
     print("Archive Opened. Locating Entry...")
     
-    entry = archive._get_entry_by_id(10)
+
+
+    entry = archive._get_entry_by_id(randint(50000,500000))
     item = entry.get_item()
     
     # 3. Read the data into a byte buffer

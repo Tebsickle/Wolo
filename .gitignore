@@ -1,2 +1,7 @@
 data
 test_output
+.venv
+checkpoints
+runs
+__pycache__/
+*.pyc
